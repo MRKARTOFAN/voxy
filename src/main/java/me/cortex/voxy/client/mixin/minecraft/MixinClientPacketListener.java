@@ -13,6 +13,10 @@ public class MixinClientPacketListener {
     @Inject(method = "handleLogin", at = @At("HEAD"))
     private void voxy$init(ClientboundLoginPacket packet, CallbackInfo ci) {
         if (!ClientSessionEvents.inSession) {
+            ClientPacketListener listener = (ClientPacketListener) (Object) this;
+            if (listener.getServerData() != null) {
+                ClientSessionEvents.captureServerAddress(listener.getServerData().ip);
+            }
             ClientSessionEvents.sessionStart();
         }
     }

@@ -5,6 +5,24 @@ import me.cortex.voxy.commonImpl.VoxyCommon;
 
 public class ClientSessionEvents {
     public static boolean inSession = false;
+    private static String capturedServerAddress;
+    private static String capturedServerStorageKey;
+
+    public static void captureServerAddress(String serverAddress) {
+        if (serverAddress == null || serverAddress.isBlank()) {
+            return;
+        }
+        capturedServerAddress = serverAddress;
+        capturedServerStorageKey = serverAddress.replace(":", "_");
+    }
+
+    public static String getCapturedServerAddress() {
+        return capturedServerAddress;
+    }
+
+    public static String getCapturedServerStorageKey() {
+        return capturedServerStorageKey;
+    }
 
     public static void sessionStart() {
         if (inSession) throw new IllegalStateException("Cannot start new session while in a session");
@@ -25,5 +43,7 @@ public class ClientSessionEvents {
         inSession = false;
 
         VoxyCommon.shutdownInstance();
+        capturedServerAddress = null;
+        capturedServerStorageKey = null;
     }
 }

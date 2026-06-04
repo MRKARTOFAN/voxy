@@ -104,24 +104,46 @@ public class VoxyClientInstance extends VoxyInstance {
         if (iserver != null) {
             basePath = iserver.getWorldPath(LevelResource.ROOT).resolve("voxy");
         } else {
-            var netHandle = Minecraft.getInstance().gameMode;
-            if (netHandle == null) {
-                Logger.error("Network handle null");
+            String serverKey = getServerStorageKey();
+            if (serverKey == null) {
+                Logger.error("Server info unavailable, using UNKNOWN");
                 basePath = basePath.resolve("UNKNOWN");
             } else {
-                var info = netHandle.connection.getServerData();
-                if (info == null) {
-                    Logger.error("Server info null");
-                    basePath = basePath.resolve("UNKNOWN");
-                } else {
-                    if (Minecraft.getInstance().isConnectedToRealms()) {
-                        basePath = basePath.resolve("realms");
-                    } else {
-                        basePath = basePath.resolve(info.ip.replace(":", "_"));
-                    }
-                }
+                basePath = basePath.resolve(serverKey);
             }
         }
         return basePath.toAbsolutePath();
+    }
+
+    private static String getServerStorageKey() {
+        if (Minecraft.getInstance().isConnectedToRealms()) {
+            return "realms";
+        }
+
+        String capturedServerKey = ClientSessionEvents.getCapturedServerStorageKey();
+        if (capturedServerKey != null) {
+            Logger.info("Using captured server data: " + ClientSessionEvents.getCapturedServerAddress());
+            return capturedServerKey;
+        }
+
+        var directConnection = Minecraft.getInstance().getConnection();
+        if (directConnection != null && directConnection.getServerData() != null) {
+            Logger.info("Using connection server data: " + directConnection.getServerData().ip);
+            return directConnection.getServerData().ip.replace(":", "_");
+        }
+
+        var gameMode = Minecraft.getInstance().gameMode;
+        if (gameMode != null && gameMode.connection != null && gameMode.connection.getServerData() != null) {
+            Logger.info("Using game mode server data: " + gameMode.connection.getServerData().ip);
+            return gameMode.connection.getServerData().ip.replace(":", "_");
+        }
+
+        var currentServer = Minecraft.getInstance().getCurrentServer();
+        if (currentServer != null) {
+            Logger.info("Using current server data: " + currentServer.ip);
+            return currentServer.ip.replace(":", "_");
+        }
+
+        return null;
     }
 }
